@@ -13,7 +13,7 @@ def parse_beta_file(file_path):
 	data = []
 	with open(file_path, 'r', encoding='utf-8') as file:
 		for line in file:
-			parts = re.split(r'\s+', line.strip())  # Разделяем по пробелам
+			parts = re.split(r'\s+', line.strip())
 			if len(parts) == 6:
 				isotope, value1, value2, unit, value3, value4 = parts
 				data.append([isotope, float(value3), float(value4)])
@@ -26,7 +26,7 @@ def parse_neut_file(file_path):
 	data = []
 	with open(file_path, 'r', encoding='utf-8') as file:
 		for line in file:
-			parts = re.split(r'\s+', line.strip())  # Разделяем по пробелам
+			parts = re.split(r'\s+', line.strip())
 			if len(parts) == 3:
 				isotope, value1, value2 = parts
 				data.append([isotope, float(value1)])
@@ -36,10 +36,9 @@ def parse_neut_file(file_path):
 
 
 def group_isomeric_isotopes(df):
-	df["BaseIsotope"] = df["Isotope"].str.replace(r'(\d+)m$', r'\1',
-	                                              regex=True)  # Убираем "m" в конце, но оставляем номер
+	df["BaseIsotope"] = df["Isotope"].str.replace(r'(\d+)m$', r'\1', regex=True)
 	grouped_df = df.groupby("BaseIsotope").agg({
-		"Frequency": "sum"  # Суммируем значение 4
+		"Frequency": "sum"
 	}).reset_index()
 	grouped_df.rename(columns={"BaseIsotope": "Isotope"}, inplace=True)
 	return grouped_df
