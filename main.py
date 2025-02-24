@@ -32,11 +32,11 @@ def parse_neut_file(file_path):
 				data.append([isotope, float(value1)])
 
 	df = pd.DataFrame(data, columns=["Isotope", "Frequency"])
-	return df
+	return df[df["Frequency"] != 0]
 
 
 def group_isomeric_isotopes(df):
-	df["BaseIsotope"] = df["Isotope"].str.replace(r'(\d+)m$', r'\1', regex=True)
+	df["BaseIsotope"] = df["Isotope"].str.replace(r'(\d+)[mn]$', r'\1', regex=True)
 	grouped_df = df.groupby("BaseIsotope").agg({
 		"Frequency": "sum"
 	}).reset_index()
@@ -46,37 +46,30 @@ def group_isomeric_isotopes(df):
 
 if __name__ == "__main__":
 	beta_df = parse_beta_file(BETA_FILE_PATH)
-	print(beta_df)
 	neut_df = parse_neut_file(NEUT_FILE_PATH)
-	print(neut_df)
 	neut_df = group_isomeric_isotopes(neut_df)
-	print(neut_df)
 
 	merged_df = pd.merge(beta_df, neut_df, on="Isotope", how="inner")
 	merged_df = merged_df.sort_values(by="HalflifeMs", ascending=False)
 
 	merged_df['HalflifeMsGroup'] = pd.cut(merged_df['HalflifeMs'], bins=BINS, labels=labels, right=False)
 
-	print(merged_df)
-
-	merged_df['Frequency'] = merged_df['Frequency'] / merged_df['Frequency'].sum()
-	merged_df.rename(columns={"Frequency": "WeightedFrequency"}, inplace=True)
-
-	merged_df['beta'] = merged_df["WeightedFrequency"] * merged_df["NeutPerDecay"]
-
+	merged_df['beta'] = merged_df["Frequency"] * merged_df["NeutPerDecay"]
 
 	grouped = merged_df.groupby('HalflifeMsGroup', observed=False)
 
+
 	def weighted_avg(group):
-		weighted_halflife = (group['HalflifeMs'] * group['WeightedFrequency']).sum() / group['WeightedFrequency'].sum()
+		weighted_halflife = (group['HalflifeMs'] * group['Frequency']).sum() / group['Frequency'].sum()
 		group_beta = group['beta'].sum()
 		return pd.Series({"WeightedAvgHalflifeMs": weighted_halflife, "GroupBeta": group_beta})
 
-	grouped_data = grouped[['HalflifeMs', 'WeightedFrequency', 'beta']]
+
+	grouped_data = grouped[['HalflifeMs', 'Frequency', 'beta']]
 
 	groups = grouped_data.apply(weighted_avg)
 
 	groups['WeightedBeta'] = groups['GroupBeta'] / groups['GroupBeta'].sum()
 
-	print(groups[['WeightedAvgHalflifeMs', 'WeightedBeta']])
-	print(groups['GroupBeta'].sum())
+	print(groups[['WeightedAvgHalflifeMs', 'WeightedBeta']].round(3))
+	print(f'Beta = {groups['GroupBeta'].sum() / 2.442}')
