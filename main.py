@@ -18,8 +18,8 @@ def parse_beta_file(file_path):
 				isotope, value1, value2, unit, value3, value4 = parts
 				data.append([isotope, float(value3), float(value4)])
 
-	df = pd.DataFrame(data, columns=["Isotope", "HalflifeMs", "NeutChance"])
-	return df[df["NeutChance"] != 0]
+	df = pd.DataFrame(data, columns=["Isotope", "HalflifeMs", "NeutPerDecay"])
+	return df[df["NeutPerDecay"] != 0]
 
 
 def parse_neut_file(file_path):
@@ -46,19 +46,24 @@ def group_isomeric_isotopes(df):
 
 if __name__ == "__main__":
 	beta_df = parse_beta_file(BETA_FILE_PATH)
+	print(beta_df)
 	neut_df = parse_neut_file(NEUT_FILE_PATH)
+	print(neut_df)
 	neut_df = group_isomeric_isotopes(neut_df)
+	print(neut_df)
 
 	merged_df = pd.merge(beta_df, neut_df, on="Isotope", how="inner")
 	merged_df = merged_df.sort_values(by="HalflifeMs", ascending=False)
-	print(merged_df)
 
 	merged_df['HalflifeMsGroup'] = pd.cut(merged_df['HalflifeMs'], bins=BINS, labels=labels, right=False)
+
 	print(merged_df)
+
 	merged_df['Frequency'] = merged_df['Frequency'] / merged_df['Frequency'].sum()
 	merged_df.rename(columns={"Frequency": "WeightedFrequency"}, inplace=True)
-	merged_df['beta'] = merged_df["WeightedFrequency"] * merged_df["NeutChance"]
-	print(merged_df)
+
+	merged_df['beta'] = merged_df["WeightedFrequency"] * merged_df["NeutPerDecay"]
+
 
 	grouped = merged_df.groupby('HalflifeMsGroup', observed=False)
 
@@ -72,6 +77,6 @@ if __name__ == "__main__":
 	groups = grouped_data.apply(weighted_avg)
 
 	groups['WeightedBeta'] = groups['GroupBeta'] / groups['GroupBeta'].sum()
-	print(groups[['WeightedAvgHalflifeMs', 'WeightedBeta']])
 
+	print(groups[['WeightedAvgHalflifeMs', 'WeightedBeta']])
 	print(groups['GroupBeta'].sum())
