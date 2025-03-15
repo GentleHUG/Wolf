@@ -19,21 +19,23 @@ def read_txt_file(file_path):
 
 def merge_txt_files_to_excel(output_file='merged_data.xlsx'):
 	"""Ищет все .txt файлы в папке, объединяет их данные в Excel, каждый файл в новые столбцы."""
-	all_data = {}
+	all_data = []
+	file_names = []
 
 	for file_name in os.listdir('.'):  # Ищем файлы в текущей директории
 		if file_name.endswith('.txt'):
 			df = read_txt_file(file_name)
 			if not df.empty:
-				all_data[file_name] = df
+				df.columns = [f'T_{file_name}', f'X_{file_name}']  # Добавляем имя файла в название столбцов
+				all_data.append(df)
+				file_names.append(file_name)
 
 	if all_data:
-		merged_df = pd.DataFrame()
-		for i, (file_name, df) in enumerate(all_data.items(), start=1):
-			merged_df[f'T{i}'] = df['T']
-			merged_df[f'X{i}'] = df['X']
+		merged_df = pd.concat(all_data, axis=1)  # Объединяем данные по ширине, не обрезая строки
 
-		merged_df.to_excel(output_file, index=False, encoding='utf-8')
+		with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+			merged_df.to_excel(writer, index=False)
+
 		print(f'Файл {output_file} успешно создан.')
 	else:
 		print('Не найдено подходящих .txt файлов.')
