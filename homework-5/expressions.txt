@@ -1,0 +1,15 @@
+Rho	  LAM/2*(S1+S2+S3+S4+S5+S6)	        
+Kinf	 Kinf_0/(1-Rho)	                   
+S1	   (2*beta_1/LAM-MC1)*exp(-lam_1*t)
+S2	   (2*beta_2/LAM-MC2)*exp(-lam_2*t)
+S3	   (2*beta_3/LAM-MC3)*exp(-lam_3*t)
+S4	   (2*beta_4/LAM-MC4)*exp(-lam_4*t)
+S5	   (2*beta_5/LAM-MC5)*exp(-lam_5*t)
+S6	   (2*beta_6/LAM-MC6)*exp(-lam_6*t)
+
+MC1	   22.313744
+MC2	   155.813393
+MC3	   163.67451
+MC4	   394.420249
+MC5	   136.381503
+MC6	   52.590791
